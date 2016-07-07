@@ -1,0 +1,165 @@
+output_port serial_port = output_port_manager.get_port(1);
+
+sub string byte2bin(int byte)
+begin
+	string b;
+	array <int> bb[8]={0,0,0,0,0,0,0,0};
+	int i=byte;
+	
+	b.resize(0);
+	
+	loop int n=1 until i==0 begin	
+		int j=i/2;
+		if ((i-2*j)==1) then bb[n]=1; else bb[n]=0; end;
+		n=n+1;
+		i=j;
+	end;
+	
+	loop int n=1 until n>8 begin
+		b.append(string(bb[9-n]));
+		n=n+1;
+	end;
+	
+	return b;
+end;	
+
+sub int bin2byte(string bin)
+begin
+	int b=0;
+	
+	loop int n=1 until n>8 begin	
+		if (bin[n]=='1') then		
+			b=b+int(pow(2,8-n));
+		end;
+		n=n+1;
+	end;
+	
+	return b;
+end;	
+
+sub string bitwiseXOR(string b1, string b2)
+begin
+	string b3;
+
+	loop int n=1 until n>8 begin
+		if (b1.substring(n,1)==b2.substring(n,1)) then b3.append("0"); else b3.append("1"); end;
+		n=n+1;
+	end;
+	
+	return b3;
+end;	
+
+sub string checksum(array <int,1> command)
+begin
+	string chk;
+	
+	loop int n=1 until n>8 begin
+		chk.append("0");
+		n=n+1;
+	end;
+	
+	loop int i=1 until i>command.count() begin
+		chk=bitwiseXOR(chk,byte2bin(command[i]));
+		i=i+1;
+	end;	
+	
+	chk=bitwiseXOR(chk,"11101010");
+	
+	return chk;
+end;
+
+
+sub tactor_set_freq1(int freq)
+begin
+	string command;
+	
+	array <int> byte_array[8] = {2,0,18,2,0,0,0,3};
+	
+	byte_array[5]=mod(freq,256);
+	byte_array[6]=freq/256;
+	byte_array[7]=bin2byte(checksum(byte_array));
+		
+	term.print_line(byte_array[5]);	
+	term.print_line(byte_array[6]);	
+		
+	command.resize(byte_array.count());
+	loop int i=1 until i>command.count() begin
+		command.set_char(i,byte_array[i]);
+		i=i+1;
+	end;
+	
+	serial_port.send_string(command);
+	
+end;
+
+sub tactor_set_freq2(int freq)
+begin
+	string command;
+	
+	array <int> byte_array[8] = {2,0,20,2,0,0,0,3};
+	
+	byte_array[5]=mod(freq,256);
+	byte_array[6]=freq/256;
+	byte_array[7]=bin2byte(checksum(byte_array));
+		
+	term.print_line(byte_array[5]);	
+	term.print_line(byte_array[6]);	
+		
+	command.resize(byte_array.count());
+	loop int i=1 until i>command.count() begin
+		command.set_char(i,byte_array[i]);
+		i=i+1;
+	end;
+	
+	serial_port.send_string(command);
+	
+end;
+
+sub tactor_on(int tactor, int duration)
+begin
+	string command;
+	
+	array <int> byte_array[8] = {2,0,17,2,0,0,0,3};
+	
+	byte_array[5]=int(pow(2,(tactor-1)));
+	byte_array[6]=duration/10;
+	byte_array[7]=bin2byte(checksum(byte_array));
+		
+	term.print_line(byte_array[5]);	
+	term.print_line(byte_array[6]);	
+		
+	command.resize(byte_array.count());
+	loop int i=1 until i>command.count() begin
+		command.set_char(i,byte_array[i]);
+		i=i+1;
+	end;
+	
+	serial_port.send_string(command);
+	
+end;
+
+sub tactors_on(string tactors, int duration)
+begin
+	
+	string command;
+	
+	array <int> byte_array[8] = {2,0,17,2,0,0,0,3};
+	
+	
+	byte_array[5]=bin2byte(tactors);
+	byte_array[6]=duration/10;
+	byte_array[7]=bin2byte(checksum(byte_array));
+		
+	term.print_line(byte_array[5]);	
+	term.print_line(byte_array[6]);	
+		
+	command.resize(byte_array.count());
+	loop int i=1 until i>command.count() begin
+		command.set_char(i,byte_array[i]);
+		i=i+1;
+	end;
+	
+	serial_port.send_string(command);
+	
+end;
+

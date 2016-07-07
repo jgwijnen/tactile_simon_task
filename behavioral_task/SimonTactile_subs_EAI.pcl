@@ -1,0 +1,187 @@
+
+sub array <string,1> getfilesR (string directoryname, string part_of_filename) begin
+	array <string> allfiles[0];
+	int nroffiles = get_directory_files(directoryname,allfiles);
+	array <string> returnfiles[0];
+	loop int x=1; until x>allfiles.count() begin
+		if allfiles[x].lower().find(part_of_filename.lower())>0 then
+			if allfiles[x].lower().find("._")==0 then			#exclude mac system files
+				returnfiles.add(allfiles[x]);
+			end;
+		end;
+		x=x+1;
+	end;
+	return returnfiles;
+end;
+
+
+picture loadpic = new picture();
+text loadtxt = new text();
+annulus_graphic loaddot_white = new annulus_graphic();
+annulus_graphic loaddot_blue = new annulus_graphic();
+
+sub create_loadpic (int nrdots) begin
+	
+	if nrdots == 0 then term.print_line("nothing to load");return;end;
+	
+	loadpic.clear();
+	loadpic.set_background_color(128,128,128);
+	
+		
+	loadtxt.set_font_size(16);
+	loadtxt.set_font_color(255,255,255);
+	loadtxt.set_background_color(128,128,128);
+	loadtxt.redraw();	
+	loaddot_white.set_dimensions(0.0,0.0,10.0,10.0);
+	loaddot_white.set_color(255,255,255,255);
+	loaddot_white.redraw();	
+	loaddot_blue.set_dimensions(0.0,0.0,10.0,10.0);
+	loaddot_blue.set_color(200,200,255,255);
+	loaddot_blue.redraw();	
+	
+	loadpic.add_part(loadtxt,0,0);
+	
+	double radius = 70.0;
+	
+	double elem_dist = (pi_value*2.0)/double(nrdots);
+		
+	loop double r = 0.0 until false begin						
+				
+		loadpic.add_part(loaddot_white, radius * sin(r), radius * cos(r));
+						
+		r=r+elem_dist;
+		if r >= pi_value * 2.0 then break;end;
+		if abs(r-pi_value * 2.0) < 0.000001 then break;end;		#failsafe for rounding errors
+		
+	end;	
+	
+end;
+
+array <bitmap> AATbmps[4][0];
+
+sub array <bitmap,1> getBitmaps (string directoryname, string part_of_filename, bool preload) begin
+	
+	#three input parameters
+	#	-folder where image files are located
+	#	-part of the filename (enables selection of a subset, use getBitmaps multiple times and append to use multiple subsets)
+	#	-whether this subrouitne should take care of loading the stim
+	#
+	#returns an array of bitmaps
+	#
+	#	Example
+	#
+	#	array <bitmap> my_bitmaps [0];
+	#	my_bitmaps.assign(getBitmaps(stimulus_directory,".bmp",true)
+	#	my_bitmaps.append(getBitmaps(stimulus_directory,".jpg",true)
+	
+	
+	array <string> bmp_fns [0];
+	array <bitmap> bmps [0];
+	bmp_fns.assign(getfilesR(directoryname, part_of_filename));
+	
+	create_loadpic(bmp_fns.count());
+	
+	loop int x=1 until x>bmp_fns.count() begin
+		bmps.add(new bitmap());
+		bmps[x].set_filename(bmp_fns[x]);
+		bmps[x].set_load_size(0.0,0.0,scale_bmps);
+		if preload then bmps[x].load();end;
+		loadpic.set_part(x+1,loaddot_blue);
+		loadpic.present();
+		
+		x=x+1;
+	end;
+	
+	return bmps;
+end;
+
+
+#slightly easier way to write outputfiles with datacolumns
+output_file out = new output_file();
+sub write (string w) begin	out.print(w);out.print("\t");end;
+sub writi (int w) begin	out.print(w);out.print("\t");end;
+
+sub array <int,1> advarrayfill (int arraylength, int minval, int maxval) begin
+	
+	#creates int arrays filled with stepped values
+	#
+	#for creation of large trial condition arrays and the like
+	# advarrayfill(12,1,4) would return {1,2,3,4,1,2,3,4,1,2,3,4}
+	# advarrayfill(30,1,6) would return {1,2,3,4,5,6,1,2,3,4,5,6,1,2,3,4,5,6,1,2,3,4,5,6,1,2,3,4,5,6}
+	#
+	#three input parameters
+	#	-the total length of the array
+	#	-the minimum value of the series
+	#	-the maximum value of the series
+	#
+	# Example
+	#
+	# array<int>trialcon[0];
+	# trialcon.assign(advarrayfill(12,1,4));
+	
+	array <int> returnarray [arraylength];
+	
+	loop int x=1;int y=minval; until x>arraylength begin	
+		
+		returnarray[x]=y;
+		
+		y=y+1;
+		if y>maxval then y=minval;end;
+	
+		x=x+1;
+	end;
+	
+	return returnarray;
+end;
+
+sub string removepath (string path_and_file) begin	
+	
+	#removes full path from stimuli files, useful when searching char strings in filenames, and for writing to output
+	#input parameter
+	#	-full filename including path (i.e. as returned by .filename() functions)
+	#
+	#returns filename without path (but with any stimdirectory subfolders)
+
+	int pathlength=stimulus_directory.count();
+	string file_no_path=path_and_file.substring(pathlength+1,path_and_file.count()-pathlength);	
+	
+	return file_no_path
+	
+end;
+
+
+sub picture showInstruct_so (stimulus_object so, int mintime) begin
+	
+	trial infotrial_siMod = new trial();
+	infotrial_siMod.set_duration(forever);
+	infotrial_siMod.set_type(first_response);
+	picture infopic_siMod = new picture();
+	stimulus_event infoevent_siMod;
+		
+	if !is_null(bitmap(so)) then
+		bitmap(so).load();		
+	end;
+	if !is_null(picture(so)) then
+		infoevent_siMod = infotrial_siMod.add_stimulus_event(picture(so));	
+	else
+		infoevent_siMod = infotrial_siMod.add_stimulus_event(infopic_siMod);	
+		infopic_siMod.add_part(picture_part(so),0,0);	
+	end;		
+	
+	infoevent_siMod.set_event_code("instruct");
+	
+	if mintime>0 then	#mintime wait while unresponsive to resp buttons
+		if !is_null(picture(so)) then
+			picture(so).present();
+		else
+			infopic_siMod.present();
+		end;
+		wait_interval(mintime);
+	end;
+	
+	
+	infotrial_siMod.present();	
+	
+	return infopic_siMod;
+	
+end;
