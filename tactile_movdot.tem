@@ -1,0 +1,10 @@
+text{caption="Up or Down?";}UD_txt;
+text{caption="Left or Right?";}LR_txt;
+text{caption=" ";}FB_txt;
+
+picture{}empty_pic;
+picture{}choice_pic;
+
+picture{
+	text FB_txt;x=0;y=0;	
+}FB_pic;

@@ -1,0 +1,107 @@
+
+output_file out = new output_file();
+
+
+sub starttrial (array<int,1> freq, array<int,1> stims, int stimdur, int stimdelay, bool allow_multiple) begin
+	
+	#stims: use an array of ints ranging from 1 to 8 
+	#if allow_multiple is true then for stims use an array of ints ranging from 1 to 255, with 1,2,4,8,16,32,64,128 representing individual stimulators, 
+	#other values would be combinations of stimulators (just sum them, so that for example stim 1, 3 and 8 are activated simultaneously with 133 (1+4+128)).
+	
+	
+	
+	#an individual sequence of stimulations 
+	loop int x=1 until x>stims.count() begin
+		
+		if freq[x]>480 then freq[x] = 480;end;
+		if freq[x]<30 then freq[x] = 30;end;
+	
+		int freqcode = (freq[x]/30) -1;
+		freq_ctrl.write(1,freqcode);
+		/*term.print(x);term.print("-");
+		term.print_line(freq[x]);*/
+		
+		if stims[x]<1 then stims[x]=1;end;
+		if stims[x]>8 then stims[x]=8;end;
+		
+		if allow_multiple then
+			outport.send_code(stims[x],stimdur);
+		else			
+			outport.send_code(portcodes[stims[x]],stimdur);
+		end;
+		
+		if stimdelay<=0 then stimdelay=1;end;							#prevent port conflicts
+		if x!=stims.count() then
+			wait_interval(stimdur+stimdelay);
+		else
+			wait_interval(stimdur);											#skipping delay for last stim (easier to get RT)
+		end;
+		
+		
+		
+		
+		x=x+1;
+	end;
+	
+	loop int x=1 until x>stims.count() begin
+		out.print(freq[x]);out.print("-");		
+		x=x+1;
+	end;
+	out.print("\t");
+	loop int x=1 until x>stims.count() begin
+		out.print(stims[x]);out.print("-");		
+		x=x+1;
+	end;
+	out.print("\t");
+	
+end;
+
+sub array <int,1> add_noise (array <int,1> inputseq, bool movfreq) begin
+	
+	int freq_multiplier = 1;
+	if movfreq then freq_multiplier = 30;end;
+	
+	#add noise
+	array<int> probs[] = {3,16,84,97};
+	
+	loop int x=1 until x>inputseq.count() begin
+		int r = random(1,100);
+		
+		if r<=probs[1] then
+			inputseq[x] = inputseq[x] - (2 * freq_multiplier);
+		elseif r<=probs[2] then
+			inputseq[x] = inputseq[x] - (1 * freq_multiplier);
+		elseif r<=probs[3] then
+			
+		elseif r<=probs[4] then
+			inputseq[x] = inputseq[x] + (1 * freq_multiplier);
+		else
+			inputseq[x] = inputseq[x] + (2 * freq_multiplier);
+		end;
+		
+		x=x+1;
+	end;
+	
+	return inputseq;
+	
+end;
+
+
+
+
+sub array <int,1> advarrayfill (int arraylength, int minval, int maxval) begin
+	
+	array <int> returnarray [arraylength];
+	
+	loop int x=1;int y=minval; until x>arraylength begin	
+		
+		returnarray[x]=y;
+		
+		y=y+1;
+		if y>maxval then y=minval;end;
+	
+		x=x+1;
+	end;
+	
+	return returnarray;
+end;

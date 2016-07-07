@@ -1,0 +1,84 @@
+
+
+out.open(logfile.subject() + "_tactmovdot.txt");
+out.print("trialnr\tfreqs\tstims\tdur\tdelay\ttrialcon\tcg\treqresp\tresp\tacc\tRT\n");
+
+if move == "movedot" then
+	choice_pic.add_part(LR_txt,0,0);
+else
+	choice_pic.add_part(UD_txt,0,0);
+end;
+
+int stimlength = 200;
+int stimdelay = 0;
+
+loop int z=1 until z>nr_of_trials begin
+
+	array<int>current_sequence [0];
+	if move == "movedot" then
+		current_sequence.assign(trial_type_template[trial_con[z]]);
+		current_sequence.assign(add_noise(current_sequence,false));
+	else
+		current_sequence.assign(trial_freq_template[trial_con[z]]);	
+		current_sequence.assign(add_noise(current_sequence,true));
+	end;
+			
+	
+	choice_pic.present();
+	
+	int starttime = clock.time();	
+	int resp1 = response_manager.total_response_count(1);
+	int resp2 = response_manager.total_response_count(2);
+	int resp3 = response_manager.total_response_count(3);
+	int decision=0;int RT=0;
+	
+	out.print(z);out.print("\t");
+	######################################################################
+	if move == "movedot" then
+		starttrial(trial_type_freqs[1],current_sequence,stimlength,stimdelay,true);
+	else
+		starttrial(current_sequence,singlestim_template,stimlength,stimdelay,true);		
+	end;
+	
+	######################################################################
+	
+	out.print(stimlength);out.print("\t");
+	out.print(stimdelay);out.print("\t");	
+	out.print(trial_con[z]);out.print("\t");
+	out.print(trialcon_cg[trial_con[z]]);out.print("\t");
+	out.print(trialcon_mapping[trial_con[z]]);out.print("\t");
+	
+	
+	
+	loop until decision !=0 begin
+		if resp1 < response_manager.total_response_count(1) then
+			RT = response_manager.last_response_data().time() - starttime;
+			decision=1;		
+		elseif resp2 < response_manager.total_response_count(2) then
+			RT = response_manager.last_response_data().time() - starttime;
+			decision=2;
+		elseif resp3 < response_manager.total_response_count(3) then
+			exit();
+		end;
+	end;
+	
+	out.print(decision);out.print("\t");
+	
+	
+	if (decision==1 && (trialcon_mapping[trial_con[z]] == "left" || trialcon_mapping[trial_con[z]] == "up")) || (decision==2 && (trialcon_mapping[trial_con[z]] == "right" || trialcon_mapping[trial_con[z]] == "down")) then
+		out.print(1);out.print("\t");
+	else
+		out.print(0);out.print("\t");
+	end;
+	
+	out.print(RT);out.print("\n");
+	
+	FB_txt.set_caption("decision: " +string(decision) + "\nRT: " + string(RT), true);
+	FB_pic.present();
+	wait_interval(500);
+	
+	empty_pic.present();
+
+	z=z+1;
+end;
+

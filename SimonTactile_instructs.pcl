@@ -1,0 +1,43 @@
+
+string left = "LEFT";
+string right = "RIGHT";
+
+string tac1_map = left;
+string tac2_map = right;
+if !continuousLeft then tac1_map = right;tac2_map = left;end;
+string vis1_map = left;
+string vis2_map = right;
+if facesLeft then vis1_map = right;vis2_map = left;end;
+
+
+string instruct1 = "Welcome to our experiment.\n\n\n\n\nPress a button to continue.";
+
+string instruct_tac2 = "On each trial you will feel a vibration on your right or left palm.\n" +
+"If you feel a CONTINUOUS vibration press with your " + tac1_map + " hand.\nIf you feel "+
+"a PULSED vibration press with your " + tac2_map + " hand.\n\nTry to push as FAST as possible\n\n"+
+"Press a button to continue.";
+
+string instruct_vis2 = "On each trial you will see a house or a face.\n\n"+
+"If you see a HOUSE press with your " + vis1_map + " hand.\nIf you see a FACE press with your " + vis2_map + " hand.\n\nTry to push as FAST as possible\n\n"+
+"Press a button to continue.";
+
+string instruct_betweenblock_pause ="Short break.\n\n\nImportant - do not move you head!";
+
+
+/*
+string instruct_motorlocalizers.	="Left/Right (2) motor localizers. In a short-while you will be asked to press the button with your {SIDE} hand over-and-over for 20 seconds, until asked to stop.
+
+Now, press the button with your {SIDE} hand over-and-over.
+
+Stop!
+
+
+6.	Somatosensory localizer 
+
+In the next session you will feel vibrotactile stimulations on your palm. 
+No need to act. 
+
+7.	Visual localizer 
+
+In the next session you will see visual figures of houses or faces. 
+No need to act. 
